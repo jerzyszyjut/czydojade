@@ -250,7 +250,7 @@ void findShortestDistancesBetweenCities(char** map, int width, int height, City&
 	}
 }
 
-void buildCitiesMap(char** map, int width, int height, unordered_map<string, City*>& cityMap)
+void buildCitiesConnections(char** map, int width, int height, unordered_map<string, City*>& cityMap)
 {
 	loadMap(map, width, height);
 
@@ -274,7 +274,7 @@ int main()
 	char** map = new char* [height];
 
 	unordered_map<string, City*> cityMap;
-	buildCitiesMap(map, width, height, cityMap);
+	buildCitiesConnections(map, width, height, cityMap);
 
 	return 0;
 }
