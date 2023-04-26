@@ -31,8 +31,8 @@ void loadMap(char** map, int width, int height)
 		map[i] = new char[width];
 		for (int j = 0; j < width; j++)
 		{
-			if ((symbol = getchar()) == '\n')
-				symbol = getchar();
+			if ((symbol = (char)getchar()) == '\n')
+				symbol = (char)getchar();
 			map[i][j] = symbol;
 		}
 	}
@@ -101,15 +101,14 @@ string getCityName(char** map, int width, int height, int x, int y)
 			}
 		}
 	}
+	return "";
 }
 
 void getCitiesNames(char** map, int width, int height, vector<City*>& cities)
 {
-	for (int i = 0; i < cities.size(); i++)
+	for (int i = 0; i < (int)cities.size(); i++)
 	{
 		City* city = cities[i];
-		int x = city->getX();
-		int y = city->getY();
 
 		city->setName(getCityName(map, width, height, city->getX(), city->getY()));
 	}
@@ -117,7 +116,7 @@ void getCitiesNames(char** map, int width, int height, vector<City*>& cities)
 
 void convertCitiesToHashmap(vector<City*>& cities, unordered_map<string, City*>& cityMap)
 {
-	for (int i = 0; i < cities.size(); i++)
+	for (int i = 0; i < (int)cities.size(); i++)
 	{
 		City* city = cities[i];
 		city->setId(i);
@@ -249,7 +248,7 @@ void findShortestDistancesBetweenCities(char** map, int width, int height, City&
 	}
 }
 
-void loadAirports(char** map, int width, int height, unordered_map<string, City*>& cityMap)
+void loadAirports(unordered_map<string, City*>& cityMap)
 {
 	int airportsCount;
 	cin >> airportsCount;
@@ -263,7 +262,6 @@ void loadAirports(char** map, int width, int height, unordered_map<string, City*
 		City* city1 = cityMap[cityFrom];
 		City* city2 = cityMap[cityTo];
 		city1->setDistanceToCity(city2, distance);
-		city2->setDistanceToCity(city1, distance);
 	}
 }
 
@@ -276,9 +274,9 @@ void buildCitiesConnections(char** map, int width, int height, unordered_map<str
 	getCitiesNames(map, width, height, cities);
 	convertCitiesToHashmap(cities, cityMap);
 
-	loadAirports(map, width, height, cityMap);
+	loadAirports(cityMap);
 
-	for (int i = 0; i < cities.size(); i++)
+	for (int i = 0; i < (int)cities.size(); i++)
 	{
 		findShortestDistancesBetweenCities(map, width, height, *cities[i], cityMap);
 	}
@@ -318,7 +316,7 @@ void printShortestDistance(City* city1, City* city2, vector<City*>& cities, int 
 {
 	priority_queue<Edge, vector<Edge>, EdgeComparator> edges;
 	vector<PathCost> pathCosts(cities.size());
-	for (int i = 0; i < cities.size(); i++)
+	for (int i = 0; i < (int)cities.size(); i++)
 	{
 		pathCosts[i].cost = INT_MAX;
 		pathCosts[i].previous_city = -1;
