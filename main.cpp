@@ -151,9 +151,9 @@ Example input:
 ........###########.
 */
 
-void findShortestDistancesBetweenCities(char** map, int width, int height, City& firstCity, City& secondCity)
+void findShortestDistancesBetweenCities(char** map, int width, int height, City& city, unordered_map<string, City*>& cityMap)
 {
-	int current_x = firstCity.getX(), current_y = firstCity.getY(), current_distance = 0;
+	int current_x = city.getX(), current_y = city.getY(), current_distance = 0;
 
 	queue<Coordinates> q;
 	int** visited = new int* [height];
@@ -175,32 +175,94 @@ void findShortestDistancesBetweenCities(char** map, int width, int height, City&
 		current_y = current.y;
 		current_distance = visited[current_y][current_x];
 
-		if (current_x == secondCity.getX() && current_y == secondCity.getY())
+		if (current_x + 1 < width)
 		{
-			firstCity.setDistanceToCity(&secondCity, current_distance);
-			secondCity.setDistanceToCity(&firstCity, current_distance);
-			return;
+			if (map[current_y][current_x + 1] == '#' && visited[current_y][current_x + 1] == -1)
+			{
+				q.push(Coordinates{ current_x + 1, current_y });
+				visited[current_y][current_x + 1] = current_distance + 1;
+			}
+			else if (map[current_y][current_x + 1] == '*')
+			{
+				string name = getCityName(map, width, height, current_x + 1, current_y);
+				City* foundCity = cityMap[name];
+				if (&city != foundCity && (foundCity->getDistanceToCity(&city) == -1 || foundCity->getDistanceToCity(&city) > current_distance + 1))
+				{
+					foundCity->setDistanceToCity(&city, current_distance + 1);
+					city.setDistanceToCity(foundCity, current_distance + 1);
+				}
+			}
 		}
-		if (current_x + 1 < width && map[current_y][current_x + 1] == '#' && visited[current_y][current_x + 1] == -1)
+		if (current_x - 1 >= 0)
 		{
-			q.push(Coordinates{ current_x + 1, current_y });
-			visited[current_y][current_x + 1] = current_distance + 1;
+			if (map[current_y][current_x - 1] == '#' && visited[current_y][current_x - 1] == -1)
+			{
+				q.push(Coordinates{ current_x - 1, current_y });
+				visited[current_y][current_x - 1] = current_distance + 1;
+			}
+			else if (map[current_y][current_x - 1] == '*')
+			{
+				string name = getCityName(map, width, height, current_x - 1, current_y);
+				City* foundCity = cityMap[name];
+				if (&city != foundCity && (foundCity->getDistanceToCity(&city) == -1 || foundCity->getDistanceToCity(&city) > current_distance + 1))
+				{
+					foundCity->setDistanceToCity(&city, current_distance + 1);
+					city.setDistanceToCity(foundCity, current_distance + 1);
+				}
+			}
 		}
-		if (current_x - 1 >= 0 && map[current_y][current_x - 1] == '#' && visited[current_y][current_x - 1] == -1)
+		if (current_y + 1 < height)
 		{
-			q.push(Coordinates{ current_x - 1, current_y });
-			visited[current_y][current_x - 1] = current_distance + 1;
+			if (map[current_y + 1][current_x] == '#' && visited[current_y + 1][current_x] == -1)
+			{
+				q.push(Coordinates{ current_x, current_y + 1});
+				visited[current_y + 1][current_x] = current_distance + 1;
+			}
+			else if (map[current_y + 1][current_x] == '*')
+			{
+				string name = getCityName(map, width, height, current_x, current_y + 1);
+				City* foundCity = cityMap[name];
+				if (&city != foundCity && (foundCity->getDistanceToCity(&city) == -1 || foundCity->getDistanceToCity(&city) > current_distance + 1))
+				{
+					foundCity->setDistanceToCity(&city, current_distance + 1);
+					city.setDistanceToCity(foundCity, current_distance + 1);
+				}
+			}
 		}
-		if (current_y + 1 < height && map[current_y + 1][current_x] == '#' && visited[current_y + 1][current_x] == -1)
+		if (current_y - 1 >= 0)
 		{
-			q.push(Coordinates{ current_x, current_y + 1 });
-			visited[current_y + 1][current_x] = current_distance + 1;
+			if (map[current_y - 1][current_x] == '#' && visited[current_y - 1][current_x] == -1)
+			{
+				q.push(Coordinates{ current_x, current_y - 1});
+				visited[current_y - 1][current_x] = current_distance + 1;
+			}
+			else if (map[current_y - 1][current_x] == '*')
+			{
+				string name = getCityName(map, width, height, current_x, current_y - 1);
+				City* foundCity = cityMap[name];
+				if (&city != foundCity && (foundCity->getDistanceToCity(&city) == -1 || foundCity->getDistanceToCity(&city) > current_distance + 1))
+				{
+					foundCity->setDistanceToCity(&city, current_distance + 1);
+					city.setDistanceToCity(foundCity, current_distance + 1);
+				}
+			}
 		}
-		if (current_y - 1 >= 0 && map[current_y - 1][current_x] == '#' && visited[current_y - 1][current_x] == -1)
-		{
-			q.push(Coordinates{ current_x, current_y - 1 });
-			visited[current_y - 1][current_x] = current_distance + 1;
-		}
+	}
+}
+
+void buildCitiesMap(char** map, int width, int height, unordered_map<string, City*>& cityMap)
+{
+	loadMap(map, width, height);
+
+	vector<City*> cities;
+
+	loadCities(map, width, height, cities);
+	getCitiesNames(map, width, height, cities);
+	convertCitiesToHashmap(cities, cityMap);
+
+	for (int i = 0; i < cities.size(); i++)
+	{
+		findShortestDistancesBetweenCities(map, width, height, *cities[i], cityMap);
 	}
 }
 
@@ -211,19 +273,8 @@ int main()
 	cin >> height;
 	char** map = new char* [height];
 
-	loadMap(map, width, height);
-
-	vector<City*> cities;
-
-	loadCities(map, width, height, cities);
-	getCitiesNames(map, width, height, cities);
-
 	unordered_map<string, City*> cityMap;
-
-	convertCitiesToHashmap(cities, cityMap);
-
-	findShortestDistancesBetweenCities(map, width, height, *cityMap["KIELCE"], *cityMap["KRAKOW"]);
-	findShortestDistancesBetweenCities(map, width, height, *cityMap["KRAKOW"], *cityMap["GDANSK"]);
+	buildCitiesMap(map, width, height, cityMap);
 
 	return 0;
 }
