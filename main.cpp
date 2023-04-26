@@ -250,6 +250,25 @@ void findShortestDistancesBetweenCities(char** map, int width, int height, City&
 	}
 }
 
+void loadAirports(char** map, int width, int height, unordered_map<string, City*>& cityMap)
+{
+	int airportsCount;
+	cin >> airportsCount;
+	for (int i = 0; i < airportsCount; i++)
+	{
+		string cityFrom, cityTo;
+		cin >> cityFrom;
+		cin >> cityTo;
+		int distance;
+		cin >> distance;
+		City* city1 = cityMap[cityFrom];
+		City* city2 = cityMap[cityTo];
+		city1->setDistanceToCity(city2, distance);
+		city2->setDistanceToCity(city1, distance);
+	}
+}
+
+
 void buildCitiesConnections(char** map, int width, int height, unordered_map<string, City*>& cityMap)
 {
 	loadMap(map, width, height);
@@ -259,6 +278,8 @@ void buildCitiesConnections(char** map, int width, int height, unordered_map<str
 	loadCities(map, width, height, cities);
 	getCitiesNames(map, width, height, cities);
 	convertCitiesToHashmap(cities, cityMap);
+
+	loadAirports(map, width, height, cityMap);
 
 	for (int i = 0; i < cities.size(); i++)
 	{
