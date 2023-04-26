@@ -29,10 +29,21 @@ public:
 	void setY(int y);
 	int getX();
 	int getY();
+	void setId(int id);
+	int getId();
+
+	struct CityEdgeComparator
+	{
+		bool operator()(const CityEdge& lhs, const CityEdge& rhs) const
+		{
+			return lhs.distance > rhs.distance;
+		}
+	};
 
 private:
-	 forward_list<CityEdge> m_adjecentCities;
-	 string m_name;
-	 int m_x, m_y;
+	int m_id;
+	forward_list<CityEdge> m_adjecentCities;
+	string m_name;
+	int m_x, m_y;
 };
 

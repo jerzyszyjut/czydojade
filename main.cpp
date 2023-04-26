@@ -4,8 +4,6 @@
 #include <vector>
 #include <unordered_map>
 #include <queue>
-#include <unordered_set>
-#include <limits>
 
 using namespace std;
 
@@ -122,6 +120,7 @@ void convertCitiesToHashmap(vector<City*>& cities, unordered_map<string, City*>&
 	for (int i = 0; i < cities.size(); i++)
 	{
 		City* city = cities[i];
+		city->setId(i);
 		cityMap[city->getName()] = city;
 	}
 }
@@ -215,7 +214,7 @@ void findShortestDistancesBetweenCities(char** map, int width, int height, City&
 		{
 			if (map[current_y + 1][current_x] == '#' && visited[current_y + 1][current_x] == -1)
 			{
-				q.push(Coordinates{ current_x, current_y + 1});
+				q.push(Coordinates{ current_x, current_y + 1 });
 				visited[current_y + 1][current_x] = current_distance + 1;
 			}
 			else if (map[current_y + 1][current_x] == '*')
@@ -233,7 +232,7 @@ void findShortestDistancesBetweenCities(char** map, int width, int height, City&
 		{
 			if (map[current_y - 1][current_x] == '#' && visited[current_y - 1][current_x] == -1)
 			{
-				q.push(Coordinates{ current_x, current_y - 1});
+				q.push(Coordinates{ current_x, current_y - 1 });
 				visited[current_y - 1][current_x] = current_distance + 1;
 			}
 			else if (map[current_y - 1][current_x] == '*')
@@ -269,11 +268,9 @@ void loadAirports(char** map, int width, int height, unordered_map<string, City*
 }
 
 
-void buildCitiesConnections(char** map, int width, int height, unordered_map<string, City*>& cityMap)
+void buildCitiesConnections(char** map, int width, int height, unordered_map<string, City*>& cityMap, vector<City*>& cities)
 {
 	loadMap(map, width, height);
-
-	vector<City*> cities;
 
 	loadCities(map, width, height, cities);
 	getCitiesNames(map, width, height, cities);
@@ -287,6 +284,97 @@ void buildCitiesConnections(char** map, int width, int height, unordered_map<str
 	}
 }
 
+void deallocateMap(char** map, int height)
+{
+	for (int i = 0; i < height; i++)
+	{
+		delete[] map[i];
+	}
+	delete[] map;
+}
+
+struct Edge
+{
+	int from;
+	int to;
+	int cost;
+};
+
+struct EdgeComparator
+{
+	bool operator()(const Edge& e1, const Edge& e2)
+	{
+		return e1.cost > e2.cost;
+	}
+};
+
+struct PathCost
+{
+	int cost;
+	int previous_city;
+};
+
+void printShortestDistance(City* city1, City* city2, vector<City*>& cities, int displayCities)
+{
+	priority_queue<Edge, vector<Edge>, EdgeComparator> edges;
+	vector<PathCost> pathCosts(cities.size());
+	for (int i = 0; i < cities.size(); i++)
+	{
+		pathCosts[i].cost = INT_MAX;
+		pathCosts[i].previous_city = -1;
+	}
+
+	int city1Index = city1->getId();
+	int city2Index = city2->getId();
+	pathCosts[city1Index].cost = 0;
+	edges.push(Edge{ city1Index, city1Index, 0 });
+
+	while (!edges.empty())
+	{
+		Edge currentEdge = edges.top();
+		edges.pop();
+		if (currentEdge.to == city2Index)
+		{
+			break;
+		}
+		for (auto& city : cities[currentEdge.to]->getAdjecentCities())
+		{
+			int currentCost = pathCosts[currentEdge.to].cost + city.distance;
+			if (currentCost < pathCosts[city.city->getId()].cost)
+			{
+				pathCosts[city.city->getId()].cost = currentCost;
+				pathCosts[city.city->getId()].previous_city = currentEdge.to;
+				edges.push(Edge{ currentEdge.to, city.city->getId(), currentCost });
+			}
+		}
+	}
+
+	if (pathCosts[city2Index].cost == INT_MAX)
+	{
+		cout << "No connection" << endl;
+	}
+	else
+	{
+		cout << pathCosts[city2Index].cost;
+
+		if (displayCities)
+		{
+			vector<int> path;
+			int currentCity = pathCosts[city2Index].previous_city;
+			while (currentCity != city1Index)
+			{
+				path.push_back(currentCity);
+				currentCity = pathCosts[currentCity].previous_city;
+			}
+			for (int i = path.size() - 1; i >= 0; i--)
+			{
+				cout << " " << cities[path[i]]->getName();
+			}
+		}
+		cout << endl;
+	}
+}
+
 int main()
 {
 	int width, height;
@@ -294,8 +382,23 @@ int main()
 	cin >> height;
 	char** map = new char* [height];
 
+	vector<City*> cities;
 	unordered_map<string, City*> cityMap;
-	buildCitiesConnections(map, width, height, cityMap);
+	buildCitiesConnections(map, width, height, cityMap, cities);
+	deallocateMap(map, height);
+
+	int instructionsCount = 0;
+	cin >> instructionsCount;
+
+	for (int i = 0; i < instructionsCount; i++)
+	{
+		string city1, city2;
+		int displayCities;
+		cin >> city1;
+		cin >> city2;
+		cin >> displayCities;
+		printShortestDistance(cityMap[city1], cityMap[city2], cities, displayCities);
+	}
 
 	return 0;
 }

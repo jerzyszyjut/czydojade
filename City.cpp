@@ -72,3 +72,13 @@ int City::getY()
 {
 	return m_y;
 }
+
+void City::setId(int id)
+{
+	m_id = id;
+}
+
+int City::getId()
+{
+	return m_id;
+}
