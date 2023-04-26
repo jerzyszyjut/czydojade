@@ -33,7 +33,7 @@ void loadMap(char** map, int width, int height)
 		map[i] = new char[width];
 		for (int j = 0; j < width; j++)
 		{
-			if((symbol = getchar()) == '\n')
+			if ((symbol = getchar()) == '\n')
 				symbol = getchar();
 			map[i][j] = symbol;
 		}
@@ -55,6 +55,56 @@ void loadCities(char** map, int width, int height, vector<City*>& cities)
 	}
 }
 
+string getCityName(char** map, int width, int height, int x, int y)
+{
+	for (int j = -1; j <= 1; j++)
+	{
+		for (int k = -1; k <= 1; k++)
+		{
+			if (j == 0 && k == 0)
+				continue;
+
+			if (x + j >= 0 && x + j < width && y + k >= 0 && y + k < height)
+			{
+				if (map[y + k][x + j] >= 'A' && map[y + k][x + j] <= 'Z')
+				{
+					string name = "";
+					if (x + j + 1 < width && map[y + k][x + j + 1] >= 'A' && map[y + k][x + j + 1] <= 'Z')
+					{
+						name += map[y + k][x + j];
+						for (int l = x + j + 1; l < width; l++)
+						{
+							if (map[y + k][l] >= 'A' && map[y + k][l] <= 'Z')
+								name += map[y + k][l];
+							else
+								break;
+						}
+					}
+					else if (x + j - 1 >= 0 && map[y + k][x + j - 1] >= 'A' && map[y + k][x + j - 1] <= 'Z')
+					{
+						name += map[y + k][x + j];
+						for (int l = x + j - 1; l >= 0; l--)
+						{
+							if (map[y + k][l] >= 'A' && map[y + k][l] <= 'Z')
+								name += map[y + k][l];
+							else
+								break;
+						}
+
+						string reversed_name = "";
+						for (int l = name.length() - 1; l >= 0; l--)
+							reversed_name += name[l];
+
+						name = reversed_name;
+					}
+
+					return name;
+				}
+			}
+		}
+	}
+}
+
 void getCitiesNames(char** map, int width, int height, vector<City*>& cities)
 {
 	for (int i = 0; i < cities.size(); i++)
@@ -62,55 +112,8 @@ void getCitiesNames(char** map, int width, int height, vector<City*>& cities)
 		City* city = cities[i];
 		int x = city->getX();
 		int y = city->getY();
-		bool searchingForCityName = true;
 
-		for (int j = -1; j <= 1 && searchingForCityName; j++)
-		{
-			for (int k = -1; k <= 1 && searchingForCityName; k++)
-			{
-				if (j == 0 && k == 0)
-					continue;
-
-				if (x + j >= 0 && x + j < width && y + k >= 0 && y + k < height)
-				{
-					if (map[y + k][x + j] >= 'A' && map[y + k][x + j] <= 'Z')
-					{
-						string name = "";
-						if (x + j + 1 < width && map[y + k][x + j + 1] >= 'A' && map[y + k][x + j + 1] <= 'Z')
-						{
-							name += map[y + k][x + j];
-							for (int l = x + j + 1; l < width; l++)
-							{
-								if (map[y + k][l] >= 'A' && map[y + k][l] <= 'Z')
-									name += map[y + k][l];
-								else
-									break;
-							}
-						}
-						else if (x + j - 1 >= 0 && map[y + k][x + j - 1] >= 'A' && map[y + k][x + j - 1] <= 'Z')
-						{
-							name += map[y + k][x + j];
-							for (int l = x + j - 1; l >= 0; l--)
-							{
-								if (map[y + k][l] >= 'A' && map[y + k][l] <= 'Z')
-									name += map[y + k][l];
-								else
-									break;
-							}
-
-							string reversed_name = "";
-							for (int l = name.length() - 1; l >= 0; l--)
-								reversed_name += name[l];
-
-							name = reversed_name;
-						}
-
-						city->setName(name);
-						searchingForCityName = false;
-					}
-				}
-			}
-		}
+		city->setName(getCityName(map, width, height, city->getX(), city->getY()));
 	}
 }
 
@@ -150,10 +153,10 @@ Example input:
 
 void findShortestDistancesBetweenCities(char** map, int width, int height, City& firstCity, City& secondCity)
 {
-	int current_x= firstCity.getX(), current_y = firstCity.getY(), current_distance=0;
+	int current_x = firstCity.getX(), current_y = firstCity.getY(), current_distance = 0;
 
 	queue<Coordinates> q;
-	int** visited = new int*[height];
+	int** visited = new int* [height];
 	for (int i = 0; i < height; i++)
 	{
 		visited[i] = new int[width];
@@ -206,7 +209,7 @@ int main()
 	int width, height;
 	cin >> width;
 	cin >> height;
-	char **map = new char*[height];
+	char** map = new char* [height];
 
 	loadMap(map, width, height);
 
