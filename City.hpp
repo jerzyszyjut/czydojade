@@ -1,10 +1,8 @@
 #pragma once
-#include <forward_list>
-#include <string>
+#include "jlist.hpp"
+#include "jstring.hpp"
 
 using namespace std;
-
-
 
 class City
 {
@@ -17,20 +15,21 @@ public:
 
 	City();
 	City(int x, int y);
+	City(City& other);
 	~City();
-	
-	void setName(string name);
-	string getName();
-	void addAdjecentCity(CityEdge city);
-	forward_list<CityEdge> getAdjecentCities();
+
+	City& operator=(City& other);
+
+	void setName(JString& name);
+	void setName(JString&& name);
+	JString getName() const;
+	JList<CityEdge>& getAdjecentCities();
 	void setDistanceToCity(City* city, int distance);
-	int getDistanceToCity(City* city);
-	void setX(int x);
-	void setY(int y);
-	int getX();
-	int getY();
+	void addAdjecentCity(City* city, int distance);
+	int getX() const;
+	int getY() const;
 	void setId(int id);
-	int getId();
+	int getId() const;
 
 	struct CityEdgeComparator
 	{
@@ -42,8 +41,7 @@ public:
 
 private:
 	int m_id;
-	forward_list<CityEdge> m_adjecentCities;
-	string m_name;
+	JList<CityEdge> m_adjecentCities;
+	JString m_name;
 	int m_x, m_y;
 };
-

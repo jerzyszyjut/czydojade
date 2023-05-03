@@ -1,11 +1,14 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include <iostream>
+#include "jlist.hpp"
+#include "jvector.hpp"
+#include "jpriorityqueue.hpp"
+#include "jqueue.hpp"
+#include "jhashmap.hpp"
 #include "City.hpp"
-#include <string>
-#include <vector>
-#include <unordered_map>
-#include <queue>
 
-using namespace std;
+#define INT_MAX 2147483647
+#define BUFFER_SIZE 64
 
 struct Coordinates
 {
@@ -38,7 +41,7 @@ void loadMap(char** map, int width, int height)
 	}
 }
 
-void loadCities(char** map, int width, int height, vector<City*>& cities)
+void loadCities(char** map, int width, int height, JVector<City*>& cities)
 {
 	for (int i = 0; i < height; i++)
 	{
@@ -53,58 +56,46 @@ void loadCities(char** map, int width, int height, vector<City*>& cities)
 	}
 }
 
-string getCityName(char** map, int width, int height, int x, int y)
+bool is_alpha_numeric(char symbol)
 {
-	for (int j = -1; j <= 1; j++)
+	return (symbol >= 'A' && symbol <= 'Z') || (symbol >= '0' && symbol <= '9');
+}
+
+JString getCityName(char** map, int width, int height, int x, int y)
+{
+	for (int xOffset = -1; xOffset <= 1; xOffset++)
 	{
-		for (int k = -1; k <= 1; k++)
+		for (int yOffset = -1; yOffset <= 1; yOffset++)
 		{
-			if (j == 0 && k == 0)
+			if (xOffset == 0 && yOffset == 0)
 				continue;
 
-			if (x + j >= 0 && x + j < width && y + k >= 0 && y + k < height)
+			if (x + xOffset >= 0 && x + xOffset < width && y + yOffset >= 0 && y + yOffset < height)
 			{
-				if (map[y + k][x + j] >= 'A' && map[y + k][x + j] <= 'Z')
-				{
-					string name = "";
-					if (x + j + 1 < width && map[y + k][x + j + 1] >= 'A' && map[y + k][x + j + 1] <= 'Z')
-					{
-						name += map[y + k][x + j];
-						for (int l = x + j + 1; l < width; l++)
-						{
-							if (map[y + k][l] >= 'A' && map[y + k][l] <= 'Z')
-								name += map[y + k][l];
-							else
-								break;
-						}
-					}
-					else if (x + j - 1 >= 0 && map[y + k][x + j - 1] >= 'A' && map[y + k][x + j - 1] <= 'Z')
-					{
-						name += map[y + k][x + j];
-						for (int l = x + j - 1; l >= 0; l--)
-						{
-							if (map[y + k][l] >= 'A' && map[y + k][l] <= 'Z')
-								name += map[y + k][l];
-							else
-								break;
-						}
+				char symbol = map[y + yOffset][x + xOffset];
 
-						string reversed_name = "";
-						for (int l = name.length() - 1; l >= 0; l--)
-							reversed_name += name[l];
+				if (!is_alpha_numeric(symbol))
+					continue;
 
-						name = reversed_name;
-					}
+				int x_start = x + xOffset;
+				int x_end = x_start;
 
-					return name;
-				}
+				while (x_start >= 0 && is_alpha_numeric(map[y + yOffset][x_start]))
+					x_start--;
+
+				while (x_end < width && is_alpha_numeric(map[y + yOffset][x_end]))
+					x_end++;
+
+				JString name = JString(map[y + yOffset], x_start + 1, x_end - x_start - 1);
+
+				return name;
 			}
 		}
 	}
 	return "";
 }
 
-void getCitiesNames(char** map, int width, int height, vector<City*>& cities)
+void getCitiesNames(char** map, int width, int height, JVector<City*>& cities)
 {
 	for (int i = 0; i < (int)cities.size(); i++)
 	{
@@ -114,53 +105,58 @@ void getCitiesNames(char** map, int width, int height, vector<City*>& cities)
 	}
 }
 
-void convertCitiesToHashmap(vector<City*>& cities, unordered_map<string, City*>& cityMap)
+void convertCitiesToHashmap(JVector<City*>& cities, JHashMap& cityMap)
 {
 	for (int i = 0; i < (int)cities.size(); i++)
 	{
 		City* city = cities[i];
 		city->setId(i);
-		cityMap[city->getName()] = city;
+		cityMap.insert(city->getName(), city);
 	}
 }
 
-/*
-Example input:
-20 20
-.........GDANSK.....
-........*...........
-........#...........
-........#...........
-*##################.
-#SZCZECIN.........#.
-#.................#.
-##................#.
-.############*#####.
-.#...WARSZAWA.......
-.#..................
-.#############......
-.#...........#......
-.#..WROCLAW.##......
-.#..*.......*.......
-.####.......#KIELCE.
-......*##.#########.
-.OPOLE..#.*.......#.
-........#.KRAKOW..#.
-........###########.
-*/
+void clearVisited(int** visited, int width, int height, int startX, int startY)
+{
+	JQueue<Coordinates> q;
+	q.push(Coordinates{ startX, startY });
+	visited[startY][startX] = -1;
 
-void findShortestDistancesBetweenCities(char** map, int width, int height, City& city, unordered_map<string, City*>& cityMap)
+	while (!q.empty())
+	{
+		Coordinates current = q.front();
+		q.pop();
+		int current_x = current.x;
+		int current_y = current.y;
+
+		if (current_x + 1 < width && visited[current_y][current_x + 1] != -1)
+		{
+			q.push(Coordinates{ current_x + 1, current_y });
+			visited[current_y][current_x + 1] = -1;
+		}
+		if (current_x - 1 >= 0 && visited[current_y][current_x - 1] != -1)
+		{
+			q.push(Coordinates{ current_x - 1, current_y });
+			visited[current_y][current_x - 1] = -1;
+		}
+		if (current_y + 1 < height && visited[current_y + 1][current_x] != -1)
+		{
+			q.push(Coordinates{ current_x, current_y + 1 });
+			visited[current_y + 1][current_x] = -1;
+		}
+		if (current_y - 1 >= 0 && visited[current_y - 1][current_x] != -1)
+		{
+			q.push(Coordinates{ current_x, current_y - 1 });
+			visited[current_y - 1][current_x] = -1;
+		}
+	}
+}
+
+void findShortestDistancesBetweenCities(char** map, int width, int height, City& city, JHashMap& cityMap, int** visited)
 {
 	int current_x = city.getX(), current_y = city.getY(), current_distance = 0;
 
-	queue<Coordinates> q;
-	int** visited = new int* [height];
-	for (int i = 0; i < height; i++)
-	{
-		visited[i] = new int[width];
-		for (int j = 0; j < width; j++)
-			visited[i][j] = -1;
-	}
+	JQueue<Coordinates> q;
+	clearVisited(visited, width, height, current_x, current_y);
 
 	q.push(Coordinates{ current_x, current_y });
 	visited[current_y][current_x] = current_distance;
@@ -182,13 +178,10 @@ void findShortestDistancesBetweenCities(char** map, int width, int height, City&
 			}
 			else if (map[current_y][current_x + 1] == '*')
 			{
-				string name = getCityName(map, width, height, current_x + 1, current_y);
+				JString name = getCityName(map, width, height, current_x + 1, current_y);
 				City* foundCity = cityMap[name];
-				if (&city != foundCity && (foundCity->getDistanceToCity(&city) == -1 || foundCity->getDistanceToCity(&city) > current_distance + 1))
-				{
-					foundCity->setDistanceToCity(&city, current_distance + 1);
-					city.setDistanceToCity(foundCity, current_distance + 1);
-				}
+				city.setDistanceToCity(foundCity, current_distance + 1);
+				foundCity->setDistanceToCity(&city, current_distance + 1);
 			}
 		}
 		if (current_x - 1 >= 0)
@@ -200,13 +193,10 @@ void findShortestDistancesBetweenCities(char** map, int width, int height, City&
 			}
 			else if (map[current_y][current_x - 1] == '*')
 			{
-				string name = getCityName(map, width, height, current_x - 1, current_y);
+				JString name = getCityName(map, width, height, current_x - 1, current_y);
 				City* foundCity = cityMap[name];
-				if (&city != foundCity && (foundCity->getDistanceToCity(&city) == -1 || foundCity->getDistanceToCity(&city) > current_distance + 1))
-				{
-					foundCity->setDistanceToCity(&city, current_distance + 1);
-					city.setDistanceToCity(foundCity, current_distance + 1);
-				}
+				city.setDistanceToCity(foundCity, current_distance + 1);
+				foundCity->setDistanceToCity(&city, current_distance + 1);
 			}
 		}
 		if (current_y + 1 < height)
@@ -218,13 +208,10 @@ void findShortestDistancesBetweenCities(char** map, int width, int height, City&
 			}
 			else if (map[current_y + 1][current_x] == '*')
 			{
-				string name = getCityName(map, width, height, current_x, current_y + 1);
+				JString name = getCityName(map, width, height, current_x, current_y + 1);
 				City* foundCity = cityMap[name];
-				if (&city != foundCity && (foundCity->getDistanceToCity(&city) == -1 || foundCity->getDistanceToCity(&city) > current_distance + 1))
-				{
-					foundCity->setDistanceToCity(&city, current_distance + 1);
-					city.setDistanceToCity(foundCity, current_distance + 1);
-				}
+				city.setDistanceToCity(foundCity, current_distance + 1);
+				foundCity->setDistanceToCity(&city, current_distance + 1);
 			}
 		}
 		if (current_y - 1 >= 0)
@@ -236,37 +223,42 @@ void findShortestDistancesBetweenCities(char** map, int width, int height, City&
 			}
 			else if (map[current_y - 1][current_x] == '*')
 			{
-				string name = getCityName(map, width, height, current_x, current_y - 1);
+				JString name = getCityName(map, width, height, current_x, current_y - 1);
 				City* foundCity = cityMap[name];
-				if (&city != foundCity && (foundCity->getDistanceToCity(&city) == -1 || foundCity->getDistanceToCity(&city) > current_distance + 1))
-				{
-					foundCity->setDistanceToCity(&city, current_distance + 1);
-					city.setDistanceToCity(foundCity, current_distance + 1);
-				}
+				city.setDistanceToCity(foundCity, current_distance + 1);
+				foundCity->setDistanceToCity(&city, current_distance + 1);
 			}
 		}
 	}
 }
 
-void loadAirports(unordered_map<string, City*>& cityMap)
+void loadAirports(JHashMap& cityMap)
 {
 	int airportsCount;
 	cin >> airportsCount;
-	for (int i = 0; i < airportsCount; i++)
+	char buffer[BUFFER_SIZE];
+	int counter = 0;
+	getchar();
+	while (counter < airportsCount && fgets(buffer, BUFFER_SIZE, stdin))
 	{
-		string cityFrom, cityTo;
-		cin >> cityFrom;
-		cin >> cityTo;
+		JString cityFrom, cityTo;
 		int distance;
-		cin >> distance;
+
+		char* token = strtok(buffer, " \n");
+		cityFrom = token;
+		token = strtok(NULL, " \n");
+		cityTo = token;
+		token = strtok(NULL, " \n");
+		distance = atoi(token);
+
 		City* city1 = cityMap[cityFrom];
 		City* city2 = cityMap[cityTo];
-		city1->setDistanceToCity(city2, distance);
+		city1->addAdjecentCity(city2, distance);
+		counter++;
 	}
 }
 
-
-void buildCitiesConnections(char** map, int width, int height, unordered_map<string, City*>& cityMap, vector<City*>& cities)
+void buildCitiesConnections(char** map, int width, int height, JHashMap& cityMap, JVector<City*>& cities)
 {
 	loadMap(map, width, height);
 
@@ -276,10 +268,24 @@ void buildCitiesConnections(char** map, int width, int height, unordered_map<str
 
 	loadAirports(cityMap);
 
+	int** visited = new int* [height];
+	for (int i = 0; i < height; i++)
+	{
+		visited[i] = new int[width];
+		for (int j = 0; j < width; j++)
+			visited[i][j] = -1;
+	}
+
 	for (int i = 0; i < (int)cities.size(); i++)
 	{
-		findShortestDistancesBetweenCities(map, width, height, *cities[i], cityMap);
+		findShortestDistancesBetweenCities(map, width, height, *cities[i], cityMap, visited);
 	}
+
+	for (int i = 0; i < height; i++)
+	{
+		delete[] visited[i];
+	}
+	delete[] visited;
 }
 
 void deallocateMap(char** map, int height)
@@ -291,111 +297,106 @@ void deallocateMap(char** map, int height)
 	delete[] map;
 }
 
-struct Edge
-{
-	int from;
-	int to;
-	int cost;
-};
-
-struct EdgeComparator
-{
-	bool operator()(const Edge& e1, const Edge& e2)
-	{
-		return e1.cost > e2.cost;
-	}
-};
-
 struct PathCost
 {
 	int cost;
 	int previous_city;
 };
 
-void printShortestDistance(City* city1, City* city2, vector<City*>& cities, int displayCities)
+void printShortestDistance(City* city1, City* city2, JVector<City*>& cities, int displayCities)
 {
-	priority_queue<Edge, vector<Edge>, EdgeComparator> edges;
-	vector<PathCost> pathCosts(cities.size());
+	JPriorityQueue edges;
+	PathCost* pathCosts = new PathCost[cities.size()];
 	for (int i = 0; i < (int)cities.size(); i++)
 	{
 		pathCosts[i].cost = INT_MAX;
-		pathCosts[i].previous_city = -1;
+		pathCosts[i].previous_city = city1->getId();
 	}
 
-	int city1Index = city1->getId();
-	int city2Index = city2->getId();
-	pathCosts[city1Index].cost = 0;
-	edges.push(Edge{ city1Index, city1Index, 0 });
+	pathCosts[city1->getId()].cost = 0;
+	edges.push(City::CityEdge{ city1, 0 });
 
 	while (!edges.empty())
 	{
-		Edge currentEdge = edges.top();
+		City::CityEdge currentEdge = edges.top();
 		edges.pop();
-		if (currentEdge.to == city2Index)
+		if (currentEdge.city->getId() == city2->getId())
 		{
 			break;
 		}
-		for (auto& city : cities[currentEdge.to]->getAdjecentCities())
+		JList<City::CityEdge> adjecentCities = currentEdge.city->getAdjecentCities();
+		for (JList<City::CityEdge>::iterator it = adjecentCities.begin(); it != adjecentCities.end(); ++it)
 		{
-			int currentCost = pathCosts[currentEdge.to].cost + city.distance;
-			if (currentCost < pathCosts[city.city->getId()].cost)
+			int currentCost = pathCosts[currentEdge.city->getId()].cost + it->distance;
+			if (currentCost < pathCosts[it->city->getId()].cost)
 			{
-				pathCosts[city.city->getId()].cost = currentCost;
-				pathCosts[city.city->getId()].previous_city = currentEdge.to;
-				edges.push(Edge{ currentEdge.to, city.city->getId(), currentCost });
+				pathCosts[it->city->getId()].cost = currentCost;
+				pathCosts[it->city->getId()].previous_city = currentEdge.city->getId();
+				edges.push(City::CityEdge{ it->city, currentCost });
 			}
 		}
 	}
 
-	if (pathCosts[city2Index].cost == INT_MAX)
+	if (pathCosts[city2->getId()].cost == INT_MAX)
 	{
 		cout << "No connection" << endl;
 	}
 	else
 	{
-		cout << pathCosts[city2Index].cost;
+		cout << pathCosts[city2->getId()].cost;
 
 		if (displayCities)
 		{
-			vector<int> path;
-			int currentCity = pathCosts[city2Index].previous_city;
-			while (currentCity != city1Index)
+			JVector<int> path;
+			int currentCity = pathCosts[city2->getId()].previous_city;
+			while (currentCity != city1->getId())
 			{
 				path.push_back(currentCity);
 				currentCity = pathCosts[currentCity].previous_city;
 			}
 			for (int i = path.size() - 1; i >= 0; i--)
 			{
-				cout << " " << cities[path[i]]->getName();
+				cout << " " << cities[path[i]]->getName().c_str();
 			}
 		}
 		cout << endl;
 	}
+
+	delete[] pathCosts;
 }
 
 int main()
 {
 	int width, height;
-	cin >> width;
-	cin >> height;
+	scanf("%d %d", &width, &height);
 	char** map = new char* [height];
 
-	vector<City*> cities;
-	unordered_map<string, City*> cityMap;
+	JVector<City*> cities;
+	JHashMap cityMap;
 	buildCitiesConnections(map, width, height, cityMap, cities);
 	deallocateMap(map, height);
 
 	int instructionsCount = 0;
 	cin >> instructionsCount;
 
-	for (int i = 0; i < instructionsCount; i++)
+	char buffer[BUFFER_SIZE];
+
+	int counter = 0;
+	getchar();
+	while (counter < instructionsCount && fgets(buffer, BUFFER_SIZE, stdin))
 	{
-		string city1, city2;
+		JString city1, city2;
 		int displayCities;
-		cin >> city1;
-		cin >> city2;
-		cin >> displayCities;
+
+		char* token = strtok(buffer, " \n");
+		city1 = token;
+		token = strtok(NULL, " \n");
+		city2 = token;
+		token = strtok(NULL, " \n");
+		displayCities = atoi(token);
+
 		printShortestDistance(cityMap[city1], cityMap[city2], cities, displayCities);
+		counter++;
 	}
 
 	return 0;

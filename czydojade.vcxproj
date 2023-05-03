@@ -128,10 +128,17 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="City.cpp" />
+    <ClCompile Include="jstring.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="City.hpp" />
+    <ClInclude Include="jhashmap.hpp" />
+    <ClInclude Include="jlist.hpp" />
+    <ClInclude Include="jpriorityqueue.hpp" />
+    <ClInclude Include="jqueue.hpp" />
+    <ClInclude Include="jstring.hpp" />
+    <ClInclude Include="jvector.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

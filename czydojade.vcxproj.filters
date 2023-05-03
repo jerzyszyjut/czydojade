@@ -21,9 +21,30 @@
     <ClCompile Include="City.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="jstring.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="City.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="jhashmap.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="jlist.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="jpriorityqueue.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="jqueue.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="jstring.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="jvector.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1,74 +1,78 @@
 #include "City.hpp"
 
-City::City()
+City::City() : m_id(0), m_adjecentCities(JList<CityEdge>()), m_name(""), m_x(0), m_y(0)
 {
-	m_x = 0;
-	m_y = 0;
-	m_name = "";
-	m_adjecentCities = forward_list<CityEdge>();
 }
 
-City::City(int x, int y)
+City::City(int x, int y) : m_id(0), m_adjecentCities(JList<CityEdge>()), m_name(""), m_x(x), m_y(y)
 {
-	m_x = x;
-	m_y = y;
-	m_name = "";
-	m_adjecentCities = forward_list<CityEdge>();
+}
+
+City::City(City& other)
+{
+	m_id = other.getId();
+	m_adjecentCities = other.getAdjecentCities();
+	m_name = other.getName();
+	m_x = other.getX();
+	m_y = other.getY();
 }
 
 City::~City()
 {
 }
 
-void City::setName(string name)
+City& City::operator=(City& other)
+{
+	m_id = other.getId();
+	m_adjecentCities = other.getAdjecentCities();
+	m_name = other.getName();
+	m_x = other.getX();
+	m_y = other.getY();
+	return *this;
+}
+
+void City::setName(JString& name)
 {
 	m_name = name;
 }
 
-string City::getName()
+void City::setName(JString&& name)
+{
+	m_name = name;
+}
+
+JString City::getName() const
 {
 	return m_name;
 }
 
-void City::addAdjecentCity(CityEdge cityEdge)
-{
-	m_adjecentCities.push_front(cityEdge);
-}
-
-forward_list<City::CityEdge> City::getAdjecentCities()
+JList<City::CityEdge>& City::getAdjecentCities()
 {
 	return m_adjecentCities;
 }
 
 void City::setDistanceToCity(City* city, int distance)
 {
+	for (JList<City::CityEdge>::iterator cityEdge = m_adjecentCities.begin(); cityEdge != m_adjecentCities.end(); ++cityEdge)
+		if (cityEdge->city == city && cityEdge->distance > distance)
+		{
+			cityEdge->distance = distance;
+			return;
+		}
 	m_adjecentCities.push_front(CityEdge{ city, distance });
 }
 
-int City::getDistanceToCity(City* city)
+void City::addAdjecentCity(City* city, int distance)
 {
-	for (CityEdge& cityEdge : m_adjecentCities)
-		if (cityEdge.city == city)
-			return cityEdge.distance;
-	return -1;
+	m_adjecentCities.push_front(CityEdge{ city, distance });
 }
 
-void City::setX(int x)
-{
-	m_x = x;
-}
-
-void City::setY(int y)
-{
-	m_y = y;
-}
-
-int City::getX()
+int City::getX() const
 {
 	return m_x;
 }
 
-int City::getY()
+int City::getY() const
 {
 	return m_y;
 }
@@ -78,7 +82,7 @@ void City::setId(int id)
 	m_id = id;
 }
 
-int City::getId()
+int City::getId() const
 {
 	return m_id;
 }
